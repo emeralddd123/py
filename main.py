@@ -13,12 +13,15 @@ open_weather_api_key = os.getenv("OPEN_WEATHER_API_KEY")
 
 def get_public_ip():
     try:
-        response = requests.get("https://api.ipify.org?format=json")
-        if response.status_code == 200:
-            print(response.json())
-            return response.json().get("ip")
-        else:
-            return None
+        # response = requests.get("https://api.ipify.org?format=json")
+        # if response.status_code == 200:
+        #     print(response.json())
+        #     return response.json().get("ip")
+        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        print("Client IP:", client_ip)
+        return client_ip
+        # else:
+        #     return None
     except Exception as e:
         print(f"Error getting public IP: {e}")
         return None
@@ -58,8 +61,9 @@ def get_weather(city, country):
 
 @app.route("/")
 def log_request():
-    private_ip = request.remote_addr
-    public_ip = get_public_ip()
+    private_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    print("Private IP:", private_ip)
+    public_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     city, country = get_city_and_country(public_ip)
     weather = get_weather(city, country)
     # print("Private IP:", private_ip)
@@ -77,4 +81,4 @@ def log_request():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080, debug=False)
+    app.run(host="0.0.0.0", port=8080, debug=True)
