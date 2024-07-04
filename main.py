@@ -3,7 +3,7 @@ import os
 
 load_dotenv()
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import requests
 
 app = Flask(__name__)
@@ -27,10 +27,10 @@ def get_public_ip():
         return None
 
 
-def get_city_and_country(public_ip):
+def get_city_and_country(user_ip):
     try:
-        if public_ip:
-            response = requests.get(f"http://ip-api.com/json/{public_ip}")
+        if user_ip:
+            response = requests.get(f"http://ip-api.com/json/{user_ip}")
             if response.status_code == 200:
                 return response.json().get("city"), response.json().get("country")
             else:
@@ -61,21 +61,24 @@ def get_weather(city, country):
 
 @app.route("/")
 def log_request():
-    private_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    print("Private IP:", private_ip)
-    public_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-    city, country = get_city_and_country(public_ip)
+    if "X-Forwarded-For" in request.headers:
+        user_ip = request.headers["X-Forwarded-For"].split(",")[0]
+    else:
+        user_ip = request.remote_addr
+    print(f"Request from {user_ip}")
+    user_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    city, country = get_city_and_country(user_ip)
     weather = get_weather(city, country)
-    # print("Private IP:", private_ip)
-    # print("Public IP:", public_ip)
-    # print("Weather:", weather)
+
     if weather:
         temperature = weather.get("main").get("temp")
-        return {
-            "client_ip": private_ip,
-            "location": city,
-            "greeting": f"Hello, {request.args.get('visitor_name', '')}!, the temperature is {temperature} degrees Celsius in {city}",
-        }
+        return jsonify(
+            {
+                "client_ip": user_ip,
+                "location": city,
+                "greeting": f"Hello, {request.args.get('visitor_name', '')}!, the temperature is {temperature} degrees Celsius in {city}",
+            }
+        )
     else:
         return {"error": "Unable to fetch weather information."}
 
