@@ -48,12 +48,6 @@ def index():
 
 @app.route("/api/hello")
 def log_request():
-    if "X-Forwarded-For" in request.headers:
-        user_ip = request.headers["X-Forwarded-For"].split(",")[0]
-        print (user_ip)
-    else:
-        user_ip = request.remote_addr
-    print(f"Request from {user_ip}")
     user_ip = request.remote_addr
     city = get_city(user_ip)
     temperature = get_weather(city)
