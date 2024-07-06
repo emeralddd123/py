@@ -12,7 +12,7 @@ weather_api_key = os.getenv("WEATHER_API_KEY")
 
 def get_city(client_ip):
     try:
-        response = requests.get(f"http://ip-api.com/json/{client_ip}")
+        response = requests.get(f'https://ipinfo.io/{client_ip}/json')
         if response.status_code == 200:
             data = response.json()
             city = data.get("city")
@@ -48,7 +48,7 @@ def index():
 
 @app.route("/api/hello")
 def log_request():
-    user_ip = request.remote_addr
+    user_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
     city = get_city(user_ip)
     temperature = get_weather(city)
 
@@ -58,7 +58,7 @@ def log_request():
             {
                 "client_ip": user_ip,
                 "location": city,
-                "greeting": f"Hello, {request.args.get('visitor_name', '')}!, the temperature is {temperature} degrees Celsius in {city}",
+                "greeting": f"Hello, {request.args.get('visitor_name', 'visitor')}!, the temperature is {temperature} degrees Celsius in {city}",
             }
         )
     else:
