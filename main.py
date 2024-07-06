@@ -10,16 +10,26 @@ app = Flask(__name__)
 
 weather_api_key = os.getenv("WEATHER_API_KEY")
 
-
-
-def get_weather(client_ip):
+def get_city(client_ip):
     try:
-        response = requests.get(
-            f"https://api.weatherapi.com/v1/current.json?key=${weather_api_key}&q=${client_ip}"
-        )
+        response = requests.get(f"http://ip-api.com/json/{client_ip}")
+        if response.status_code == 200:
+            data = response.json()
+            city = data.get("city")
+            return city
+        else:
+            print(response.json())
+            return None
+    except Exception as e:
+        print(f"Error getting city: {e}")
+        return None
+
+def get_weather(city):
+    try:
+        response = requests.get(f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={weather_api_key}&units=metric")
         if response.status_code == 200:
             print(response.json())
-            return response.json()
+            return response.json().get("main").get("temp")
         else:
             print(response.json())
             return None
@@ -44,13 +54,12 @@ def log_request():
     else:
         user_ip = request.remote_addr
     print(f"Request from {user_ip}")
-    user_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-    # city, country = get_city_and_country(user_ip)
-    weather = get_weather(user_ip)
+    user_ip = request.remote_addr
+    city = get_city(user_ip)
+    temperature = get_weather(city)
 
-    if weather:
-        temperature = weather.get("current").get("temp_c")
-        city = weather.get("location").get("name")
+    if temperature:
+
         return jsonify(
             {
                 "client_ip": user_ip,
