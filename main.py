@@ -48,7 +48,7 @@ def index():
 
 @app.route("/api/hello")
 def log_request():
-    user_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)[0]
+    user_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr).split(",")[0]
     city = get_city(user_ip)
     temperature = get_weather(city)
 
